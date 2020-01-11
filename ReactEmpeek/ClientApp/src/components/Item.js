@@ -39,7 +39,6 @@ export class Item extends Component {
 			.then(response => response.json())
 			.then(data => {
 				console.log(data);
-				var pagination = this.getPagination(data);
 				this.GetItems(data.totalPages);
 			}));
 
@@ -53,8 +52,12 @@ export class Item extends Component {
 			method: 'DELETE',
 			headers: { 'content-type': 'application/json' },
 			body: JSON.stringify({ id: id })
-		}).then(function (responce) {
-		});
+		}).then(() => fetch('api/Item/GetPageInfo')
+			.then(response => response.json())
+			.then(data => {
+				console.log(data);
+				this.GetItems(this.state.pageInfo.pageNumber);
+			}));
     }
 
     handleEdit = (id) => {
