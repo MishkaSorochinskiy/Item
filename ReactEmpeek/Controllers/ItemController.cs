@@ -20,9 +20,17 @@ namespace ReactEmpeek.Controllers
         {
             int pageSize = 4; // количество объектов на страницу
             IEnumerable<Item> itemsPerPages = itemContext.Items.Skip((page - 1) * pageSize).Take(pageSize);
-            PageInfo pageInfo = new PageInfo { PageNumber = page, PageSize = pageSize, TotalItems = itemContext.Items.Count() };
+            PageInfo pageInfo = new PageInfo { PageNumber = page, PageSize = pageSize, TotalItems = itemContext.Items.ToList().Count};
             ItemViewModel ivm = new ItemViewModel() { PageInfo = pageInfo, Items = itemsPerPages };
             return ivm;
+        }
+
+        [HttpGet("[action]")]
+        public PageInfo getPageInfo()
+        {
+            var info = new PageInfo() { PageSize = 4, TotalItems = itemContext.Set<Item>().ToList().Count };
+            var size = info.TotalPages;
+            return info;
         }
 
         [HttpGet("[action]")]

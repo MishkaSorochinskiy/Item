@@ -14,46 +14,47 @@ export class Item extends Component {
         this.GetItems(1);
     }
 
-    componentDidMount() {
-       
+	componentDidMount() {
 
-    }
+	}
 
-    GetItems = (pageNumber) => {
-        console.log("nazar");
+	GetItems = (pageNumber) => {
         fetch('api/Item/GetItems?page='+pageNumber)
             .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                this.setState({ items: data.items, loading: false, pageInfo: data.pageInfo });
+			.then(data => {
+				var pagination = this.getPagination(data.pageInfo);
+				this.setState({ items: data.items, loading: false, pageInfo: data.pageInfo, pages: pagination  });
             });
-        if (this.state.pageInfo !== null) {
-            this.getPagination();
-        }
     }
 
     handleSubmit(event) {
-        var item = { name: this.state.name, type: this.state.name };
-        alert('A name was submitted: ' + this.state.name + ' ' + this.state.type);
+        var item = { name: this.state.name, type: this.state.type };
         fetch('api/Item/AddPoint', {
             method: 'POST',
             body: JSON.stringify(item),
             headers: {
                 'Content-Type': 'application/json'
             }
-        });
+		}).then(() => fetch('api/Item/GetPageInfo')
+			.then(response => response.json())
+			.then(data => {
+				console.log(data);
+				var pagination = this.getPagination(data);
+				this.GetItems(data.totalPages);
+			}));
+
         event.preventDefault();
-        this.setState({ name: '', type: '' });
+		this.setState({ name: '', type: '' });
     }
 
-    handleDelete = (id) => {
-        console.log(id);
-        fetch('api/Item/DeleteItem', {
-            method: 'DELETE',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ id: id })
-        })
-        this.GetItems(this.state.pageInfo.pageNumber);
+	handleDelete = (id) => {
+		let tmppageinfo = this.state.pageInfo.pageNumber;
+		fetch('api/Item/DeleteItem', {
+			method: 'DELETE',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify({ id: id })
+		}).then(function (responce) {
+		});
     }
 
     handleEdit = (id) => {
@@ -66,7 +67,6 @@ export class Item extends Component {
             })
             this.setState({ isChanged: false });
         }
-        this.getPagination();
     }
 
     changeElements = (id, event) => {
@@ -81,11 +81,8 @@ export class Item extends Component {
             this.setState({ items: itemsForChange });
         }
     }
-    getPagination = () => {
-        
-        let pageInfo = this.state.pageInfo;
+    getPagination = (pageInfo) => {
         let pagination = [];
-        console.log(pageInfo);
         if (pageInfo.totalPages > 4) {
             if (pageInfo.pageNumber != 1 && pageInfo.pageNumber != pageInfo.totalPages && pageInfo.pageNumber != pageInfo.totalPages - 1) {
                 pagination.push(pageInfo.pageNumber - 1);
@@ -109,9 +106,9 @@ export class Item extends Component {
             for (let i = 0; i < pageInfo.totalPages; i++) {
                 pagination.push(i + 1);
             }
-        }
-        this.setState({ pages: pagination });
-        console.log(pagination);
+		}
+
+		return pagination;
     }
 
 
@@ -127,7 +124,7 @@ export class Item extends Component {
                             <input  placeholder="item name"  type="text" value={this.state.name} required onChange={(ev) => this.setState({ name: ev.target.value })} />
                         </label>
                         <label>
-                            <input  placeholder="item name"  type="text" value={this.state.type} required onChange={(ev) => this.setState({ type: ev.target.value })} />
+                            <input  placeholder="item type"  type="text" value={this.state.type} required onChange={(ev) => this.setState({ type: ev.target.value })} />
                         </label>
                         <button type="submit" >add</button>
                     </form>
@@ -145,8 +142,8 @@ export class Item extends Component {
                             <tr key={item.id}>
                                 <td>{this.state.isEditing && this.state.isEditId === item.id ? <input value={item.name} name="name" onChange={(ev) => this.changeElements(item.id, ev)} /> : item.name} </td>
                                 <td>{this.state.isEditing && this.state.isEditId === item.id ? <input value={item.type} name="type" onChange={(ev) => this.changeElements(item.id, ev)} /> : item.type}</td>
-                                <td>
-                                    <a onClick={() => this.handleDelete(item.id)}>delete</a>
+								<td>
+									<a onClick={() => this.handleDelete(item.id)}>delete</a>
                                     <a onClick={() => this.handleEdit(item.id)}>edit</a>
                                 </td>
                             </tr>
